@@ -173,7 +173,9 @@ elif value == 'IP of WAN2':
     c.send_config_set(config_commands='delete vpn ipsec site-to-site peer ip of AWS router1')
     c.send_config_set(config_commands='commit')
     c.send_config_set(config_commands='save')
+
     print('Building VPN for wan2')
+    
     print('Configuring ESP Groups....')
     c.send_config_set(config_commands='set vpn ipsec esp-group ESP-AWS-TEST2 compression enable')
     c.send_config_set(config_commands='set vpn ipsec esp-group ESP-AWS-TEST2 lifetime 28800')
@@ -209,24 +211,24 @@ elif value == 'IP of WAN2':
 
     # Building up the AWS VPN for WAN2
     print('Building up the AWS VPN for WAN2...')
-    c.send_config_set(config_commands='set vpn ipsec site-to-site peer ip of AWS router')
-    c.send_config_set(config_commands='set vpn ipsec site-to-site peer ip of AWS router authentication mode pre-shared-secret presharedkey')
-    c.send_config_set(config_commands='set vpn ipsec site-to-site peer ip of AWS router authentication pre-shared-secret ')
-    c.send_config_set(config_commands='set vpn ipsec site-to-site peer ip of AWS router connection-type initiate')
-    c.send_config_set(config_commands='set vpn ipsec site-to-site peer ip of AWS router default-esp-group ESP-AWS-TEST2')
-    c.send_config_set(config_commands='set vpn ipsec site-to-site peer ip of AWS router ike-group IKE-AWS-TEST2')
-    c.send_config_set(config_commands='set vpn ipsec site-to-site peer ip of AWS router description AWS-TEST2-S2S-VPN')
-    c.send_config_set(config_commands='set vpn ipsec site-to-site peer ip of AWS router local-address ip of wan2')
+    c.send_config_set(config_commands='set vpn ipsec site-to-site peer ip of AWS router2')
+    c.send_config_set(config_commands='set vpn ipsec site-to-site peer ip of AWS router2 authentication mode pre-shared-secret presharedkey')
+    c.send_config_set(config_commands='set vpn ipsec site-to-site peer ip of AWS router2 authentication pre-shared-secret ')
+    c.send_config_set(config_commands='set vpn ipsec site-to-site peer ip of AWS router2 connection-type initiate')
+    c.send_config_set(config_commands='set vpn ipsec site-to-site peer ip of AWS router2 default-esp-group ESP-AWS-TEST2')
+    c.send_config_set(config_commands='set vpn ipsec site-to-site peer ip of AWS router2 ike-group IKE-AWS-TEST2')
+    c.send_config_set(config_commands='set vpn ipsec site-to-site peer ip of AWS router2 description AWS-TEST2-S2S-VPN')
+    c.send_config_set(config_commands='set vpn ipsec site-to-site peer ip of AWS router2 local-address ip of wan2')
     # tunnel 1
-    c.send_config_set(config_commands='set vpn ipsec site-to-site peer ip of AWS router tunnel 1 allow-nat-networks disable')
-    c.send_config_set(config_commands='set vpn ipsec site-to-site peer ip of AWS router tunnel 1 allow-public-networks disable')
-    c.send_config_set(config_commands='set vpn ipsec site-to-site peer ip of AWS router tunnel 1 local prefix local subnet')
-    c.send_config_set(config_commands='set vpn ipsec site-to-site peer ip of AWS router tunnel 1 remote prefix remote subnet')
+    c.send_config_set(config_commands='set vpn ipsec site-to-site peer ip of AWS router2 tunnel 1 allow-nat-networks disable')
+    c.send_config_set(config_commands='set vpn ipsec site-to-site peer ip of AWS router2 tunnel 1 allow-public-networks disable')
+    c.send_config_set(config_commands='set vpn ipsec site-to-site peer ip of AWS router2 tunnel 1 local prefix local subnet')
+    c.send_config_set(config_commands='set vpn ipsec site-to-site peer ip of AWS router2 tunnel 1 remote prefix remote subnet')
     # tunnel 2
-    c.send_config_set(config_commands='set vpn ipsec site-to-site peer ip of AWS router tunnel 2 allow-nat-networks disable')
-    c.send_config_set(config_commands='set vpn ipsec site-to-site peer ip of AWS router tunnel 2 allow-public-networks disable')
-    c.send_config_set(config_commands='set vpn ipsec site-to-site peer ip of AWS router tunnel 2 local prefix local subnet 2')
-    c.send_config_set(config_commands='set vpn ipsec site-to-site peer ip of AWS router tunnel 2 remote prefix remote subnet')
+    c.send_config_set(config_commands='set vpn ipsec site-to-site peer ip of AWS router2 tunnel 2 allow-nat-networks disable')
+    c.send_config_set(config_commands='set vpn ipsec site-to-site peer ip of AWS router2 tunnel 2 allow-public-networks disable')
+    c.send_config_set(config_commands='set vpn ipsec site-to-site peer ip of AWS router2 tunnel 2 local prefix local subnet 2')
+    c.send_config_set(config_commands='set vpn ipsec site-to-site peer ip of AWS router2 tunnel 2 remote prefix remote subnet')
 
     print('Saving configuration...')
     c.send_config_set(config_commands='commit')
@@ -249,11 +251,3 @@ elif value == 'IP of WAN2':
     cc.connect(hostname='ip of cloud controller', username='ubuntu', pkey=k)
     stdin, stdout, stderr = cc.exec_command('sudo cp config2.json /path /to /the /config /file/config.gateway.json')
     cc.close()
-
-    
-
-
-
-
-
-
