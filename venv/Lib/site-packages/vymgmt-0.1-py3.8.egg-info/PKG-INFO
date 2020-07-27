@@ -1,0 +1,11 @@
+Metadata-Version: 1.0
+Name: vymgmt
+Version: 0.1
+Summary: A library for configuring VyOS routers over SSH
+Home-page: https://github.com/vyos/python-vyos-mgmt
+Author: VyOS maintainers and contributors
+Author-email: maintainers@vyos.net
+License: MIT
+Description: A library for configuring VyOS routers over SSH
+Keywords: VyOS,EdgeOS,Vyatta
+Platform: UNKNOWN
