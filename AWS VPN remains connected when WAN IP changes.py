@@ -1,34 +1,43 @@
 from netmiko.vyos.vyos_ssh import VyOSSSH
 from email.message import EmailMessage
+from scp import SCPClient
 import paramiko
 import requests
 import smtplib
 import os
 
 print('Connecting')
-c = VyOSSSH(ip='local IP of the router', username='username', password='password', use_keys=False)
+#c=VyOSSSH(ip='54.66.164.57', username='vyos', key_file="c:\\scripts\\private.pem", use_keys=True)
+
+# IT Demon with 4G
+#c = VyOSSSH(ip='192.168.168.1', username='xyli', password='T7XOHict', use_keys=False)
+c = VyOSSSH(ip='10.2.29.1', username='SteveVetUnifi', password='rPRRrqr0dyBV0yrO7', use_keys=False)
 print('Entering Config mode')
 c.config_mode()
+#c.send_config_set(config_commands='configure')
 
-# Calling what's my ip api
 r = requests.get('https://api.ipify.org?format=json')
 d = r.json()
+
 
 for value in d.values():
     print('This is the current IP: '+value)
 
-# Finding the local ip address - Ideally can be either the IP of WAN1 or WAN2
-# If ip is ip of WAN1, then delete WAN2 VPN and vise versa. 
+# Finding local address:
 print('Finding local address of the current VPN...')
+
+# Either can be 123.209.79.139 (WAN1) or 123.209.87.142 (WAN2)
+# Either can be 203.194.45.6 (WAN1) or 14.200.216.194 (WAN2)
 output = c.send_config_set(config_commands='show vpn ipsec site-to-site | grep local-address')
 
 if value in output:
     print("IP not changed")
 
-elif value == 'IP of WAN1':
+elif value == '203.194.45.6':
+    print('WAN1: '+value)
 
-    # Email notification if ip changes:
-    fn = 'Path\\to\\the\\password\\file'
+    # Email notification phase:
+    fn = 'c:\\Users\\xezhang\\Desktop\\pass(2).txt'
     p = os.popen('attrib +h' + fn)
     t = p.read()
     p.close()
@@ -42,25 +51,24 @@ elif value == 'IP of WAN1':
     smtpserver = smtplib.SMTP(smtpsvr, 587)
 
     msg = EmailMessage()
-    msg['Subject'] = 'IP for xxx has changed'
-    msg['From'] = 'ABCD@ABCD.COM'
-    msg['To'] = 'XYZ@ABCD.COM'
+    msg['Subject'] = 'IP for SVES has changed to WAN1'
+    msg['From'] = 'frank@vet.partners'
+    msg['To'] = 'yuan.li@vet.partners', 'eddie.zhang@vet.partners'
 
     smtpserver.ehlo()
     smtpserver.starttls()
-    smtpserver.login('fABCD@ABCD.COM', password)
+    smtpserver.login('frank@vet.partners', password)
     smtpserver.send_message(msg)
     smtpserver.close()
 
-    # As USG controller doesn't seem to support multiple ipsecs so will need to delete the existing ipsec
-    # In this case we are going to delete vpn with AWS router 2:
+    # VPN Processing phase:
     print('Deleting VPN')
-    c.send_config_set(config_commands='delete vpn ipsec site-to-site peer ip of AWS router2')
+    # c.send_config_set(config_commands='delete vpn ipsec site-to-site peer 13.55.5.211')
+    c.send_config_set(config_commands='delete vpn ipsec site-to-site peer 3.105.152.145')
     c.send_config_set(config_commands='commit')
     c.send_config_set(config_commands='save')
-    
-    # And now we are going to set up VPN for WAN2'
-    print('Building VPN for WAN1')
+    #print('Building VPN for 123.209.79.173')
+    print('Building VPN for 203.194.45.6')
 
     print('Configuring ESP Groups....')
     c.send_config_set(config_commands='set vpn ipsec esp-group ESP-AWS-TEST compression enable')
@@ -95,27 +103,27 @@ elif value == 'IP of WAN1':
     c.send_config_set(config_commands='set vpn ipsec auto-firewall-nat-exclude enable')
     c.send_config_set(config_commands='set vpn ipsec esp-group ESP-AWS-TEST compression disable')
 
-    # Setting up AWS s2s VPN for WAN1
-    print('Setting up AWS VPN for WAN1...')
-
-    c.send_config_set(config_commands='set vpn ipsec site-to-site peer ip of AWS router1')
-    c.send_config_set(config_commands='set vpn ipsec site-to-site peer ip of AWS router1 authentication mode pre-shared-secret')
-    c.send_config_set(config_commands='set vpn ipsec site-to-site peer ip of AWS router1 authentication pre-shared-secret preshaerdkey')
-    c.send_config_set(config_commands='set vpn ipsec site-to-site peer ip of AWS router1 connection-type initiate')
-    c.send_config_set(config_commands='set vpn ipsec site-to-site peer ip of AWS router1 default-esp-group ESP-AWS-TEST1')
-    c.send_config_set(config_commands='set vpn ipsec site-to-site peer ip of AWS router1 ike-group IKE-AWS-TEST1')
-    c.send_config_set(config_commands='set vpn ipsec site-to-site peer ip of AWS router1 description AWS-TEST-S2S-VPN-1')
-    c.send_config_set(config_commands='set vpn ipsec site-to-site peer ip of AWS router1 local-address WAN1 IP')
+    # Building up the AWS VPN for WAN2
+    print('Building up the AWS VPN for WAN1...')
+    #c.send_config_set(config_commands='set vpn ipsec site-to-site peer 3.105.163.215')
+    c.send_config_set(config_commands='set vpn ipsec site-to-site peer 13.54.124.84')
+    c.send_config_set(config_commands='set vpn ipsec site-to-site peer 13.54.124.84 authentication mode pre-shared-secret')
+    c.send_config_set(config_commands='set vpn ipsec site-to-site peer 13.54.124.84 authentication pre-shared-secret nn23sdk6')
+    c.send_config_set(config_commands='set vpn ipsec site-to-site peer 13.54.124.84 connection-type initiate')
+    c.send_config_set(config_commands='set vpn ipsec site-to-site peer 13.54.124.84 default-esp-group ESP-AWS-TEST2')
+    c.send_config_set(config_commands='set vpn ipsec site-to-site peer 13.54.124.84 ike-group IKE-AWS-TEST2')
+    c.send_config_set(config_commands='set vpn ipsec site-to-site peer 13.54.124.84 description AWS-TEST-S2S-VPN-2')
+    c.send_config_set(config_commands='set vpn ipsec site-to-site peer 13.54.124.84 local-address 203.194.45.6')
     # tunnel 1
-    c.send_config_set(config_commands='set vpn ipsec site-to-site peer ip of AWS router1 tunnel 1 allow-nat-networks disable')
-    c.send_config_set(config_commands='set vpn ipsec site-to-site peer ip of AWS router1 tunnel 1 allow-public-networks disable')
-    c.send_config_set(config_commands='set vpn ipsec site-to-site peer ip of AWS router1 tunnel 1 local prefix local subnet_1')
-    c.send_config_set(config_commands='set vpn ipsec site-to-site peer ip of AWS router1 tunnel 1 remote prefix remote subnet')
+    c.send_config_set(config_commands='set vpn ipsec site-to-site peer 13.54.124.84 tunnel 1 allow-nat-networks disable')
+    c.send_config_set(config_commands='set vpn ipsec site-to-site peer 13.54.124.84 tunnel 1 allow-public-networks disable')
+    c.send_config_set(config_commands='set vpn ipsec site-to-site peer 13.54.124.84 tunnel 1 local prefix 10.2.29.0/24')
+    c.send_config_set(config_commands='set vpn ipsec site-to-site peer 13.54.124.84 tunnel 1 remote prefix 172.31.0.0/16')
     # tunnel 2
-    c.send_config_set(config_commands='set vpn ipsec site-to-site peer ip of AWS router1 tunnel 2 allow-nat-networks disable')
-    c.send_config_set(config_commands='set vpn ipsec site-to-site peer ip of AWS router1 tunnel 2 allow-public-networks disable')
-    c.send_config_set(config_commands='set vpn ipsec site-to-site peer ip of AWS router1 tunnel 2 local prefix local subnet_2')
-    c.send_config_set(config_commands='set vpn ipsec site-to-site peer ip of AWS router1 tunnel 2 remote prefix remote subnet')
+    c.send_config_set(config_commands='set vpn ipsec site-to-site peer 13.54.124.84 tunnel 2 allow-nat-networks disable')
+    c.send_config_set(config_commands='set vpn ipsec site-to-site peer 13.54.124.84 tunnel 2 allow-public-networks disable')
+    c.send_config_set(config_commands='set vpn ipsec site-to-site peer 13.54.124.84 tunnel 2 local prefix 192.168.1.0/24')
+    c.send_config_set(config_commands='set vpn ipsec site-to-site peer 13.54.124.84 tunnel 2 remote prefix 172.31.0.0/16')
 
     print('Saving configuration...')
     c.send_config_set(config_commands='commit')
@@ -127,25 +135,29 @@ elif value == 'IP of WAN1':
     c.send_config_set(config_commands='mca-ctrl -t dump-cfg > config1.txt')
     c.exit_config_mode()
     c.disconnect()
+    
+    ssh_client = paramiko.SSHClient()
+    ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    s = ssh_client.connect(hostname='10.2.29.1', username='SteveVetUnifi', password='rPRRrqr0dyBV0yrO7')
+    # Downloading file
+    ftp_client_d = ssh_client.open_sftp()
+    ftp_client_d.get('/home/SteveVetUnifi/config1.txt', 'C:\\Users\\xezhang\\Desktop\\test\\config1.json')
+    # Uploading file
+    ftp_client_u = paramiko.SSHClient()
+    k = paramiko.RSAKey.from_private_key_file("c:\\Users\\xezhang\\Desktop\\test\\UniFiController.pem")
+    ftp_client_u.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    ftp_client_u.connect(hostname='52.62.211.89', username='ubuntu', pkey=k)
+    with SCPClient(ftp_client_u.get_transport()) as scp:
+        scp.put('C:\\Users\\xezhang\\Desktop\\test\\config1.json', '/home/ubuntu/')
+    ftp_client_u.exec_command('sudo cp /home/ubuntu/config1.json /usr/lib/unifi/data/sites/wnrgknvx/config.gateway.json')
+    ftp_client_u.close()
 
-    # Download with Powershell scripts
 
-    # SSH into Cloud Controller and modify the JSON configuration file - hasn't tested in bulk run
-
-    k = paramiko.RSAKey.from_private_key_file("Path\\to\\the\\controller_pem_file")
-    cc = paramiko.SSHClient()
-    cc.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-
-    cc.connect(hostname='ip of cloud controller', username='controller_username', pkey=k)
-
-    stdin, stdout, stderr = cc.exec_command('sudo cp config1.json /path /to /the /config /file/config.gateway.json')
-    cc.close()
-
-
-elif value == 'IP of WAN2':
+elif value == '14.200.216.194':
+    print('WAN2 '+value)
 
     # Email notification phase:
-    fn = 'Path\\to\\the\\password\\file'
+    fn = 'c:\\Users\\xezhang\\Desktop\\pass(2).txt'
     p = os.popen('attrib +h' + fn)
     t = p.read()
     p.close()
@@ -159,23 +171,22 @@ elif value == 'IP of WAN2':
     smtpserver = smtplib.SMTP(smtpsvr, 587)
 
     msg = EmailMessage()
-    msg['Subject'] = 'IP for xxx has changed'
-    msg['From'] = 'ABCD@ABCD.COM'
-    msg['To'] = 'XYZ@ABCD.COM'
+    msg['Subject'] = 'IP for SVES has changed to WAN2'
+    msg['From'] = 'frank@vet.partners'
+    msg['To'] = 'yuan.li@vet.partners', 'eddie.zhang@vet.partners'
 
     smtpserver.ehlo()
     smtpserver.starttls()
-    smtpserver.login('ABCD@ABCD.COM', password)
+    smtpserver.login('frank@vet.partners', password)
     smtpserver.send_message(msg)
     smtpserver.close()
 
+    # VPN Processing phase:
     print('Deleting VPN')
-    c.send_config_set(config_commands='delete vpn ipsec site-to-site peer ip of AWS router1')
+    c.send_config_set(config_commands='delete vpn ipsec site-to-site peer 13.54.124.84')
     c.send_config_set(config_commands='commit')
     c.send_config_set(config_commands='save')
-
-    print('Building VPN for wan2')
-    
+    print('Building VPN for 14.200.216.194')
     print('Configuring ESP Groups....')
     c.send_config_set(config_commands='set vpn ipsec esp-group ESP-AWS-TEST2 compression enable')
     c.send_config_set(config_commands='set vpn ipsec esp-group ESP-AWS-TEST2 lifetime 28800')
@@ -211,24 +222,24 @@ elif value == 'IP of WAN2':
 
     # Building up the AWS VPN for WAN2
     print('Building up the AWS VPN for WAN2...')
-    c.send_config_set(config_commands='set vpn ipsec site-to-site peer ip of AWS router2')
-    c.send_config_set(config_commands='set vpn ipsec site-to-site peer ip of AWS router2 authentication mode pre-shared-secret presharedkey')
-    c.send_config_set(config_commands='set vpn ipsec site-to-site peer ip of AWS router2 authentication pre-shared-secret ')
-    c.send_config_set(config_commands='set vpn ipsec site-to-site peer ip of AWS router2 connection-type initiate')
-    c.send_config_set(config_commands='set vpn ipsec site-to-site peer ip of AWS router2 default-esp-group ESP-AWS-TEST2')
-    c.send_config_set(config_commands='set vpn ipsec site-to-site peer ip of AWS router2 ike-group IKE-AWS-TEST2')
-    c.send_config_set(config_commands='set vpn ipsec site-to-site peer ip of AWS router2 description AWS-TEST2-S2S-VPN')
-    c.send_config_set(config_commands='set vpn ipsec site-to-site peer ip of AWS router2 local-address ip of wan2')
+    c.send_config_set(config_commands='set vpn ipsec site-to-site peer 3.105.152.145')
+    c.send_config_set(config_commands='set vpn ipsec site-to-site peer 3.105.152.145 authentication mode pre-shared-secret nn23sdk6')
+    c.send_config_set(config_commands='set vpn ipsec site-to-site peer 3.105.152.145 authentication pre-shared-secret ')
+    c.send_config_set(config_commands='set vpn ipsec site-to-site peer 3.105.152.145 connection-type initiate')
+    c.send_config_set(config_commands='set vpn ipsec site-to-site peer 3.105.152.145 default-esp-group ESP-AWS-TEST2')
+    c.send_config_set(config_commands='set vpn ipsec site-to-site peer 3.105.152.145 ike-group IKE-AWS-TEST2')
+    c.send_config_set(config_commands='set vpn ipsec site-to-site peer 3.105.152.145 description AWS-TEST2-S2S-VPN')
+    c.send_config_set(config_commands='set vpn ipsec site-to-site peer 3.105.152.145 local-address 14.200.216.194')
     # tunnel 1
-    c.send_config_set(config_commands='set vpn ipsec site-to-site peer ip of AWS router2 tunnel 1 allow-nat-networks disable')
-    c.send_config_set(config_commands='set vpn ipsec site-to-site peer ip of AWS router2 tunnel 1 allow-public-networks disable')
-    c.send_config_set(config_commands='set vpn ipsec site-to-site peer ip of AWS router2 tunnel 1 local prefix local subnet')
-    c.send_config_set(config_commands='set vpn ipsec site-to-site peer ip of AWS router2 tunnel 1 remote prefix remote subnet')
+    c.send_config_set(config_commands='set vpn ipsec site-to-site peer 3.105.152.145 tunnel 1 allow-nat-networks disable')
+    c.send_config_set(config_commands='set vpn ipsec site-to-site peer 3.105.152.145 tunnel 1 allow-public-networks disable')
+    c.send_config_set(config_commands='set vpn ipsec site-to-site peer 3.105.152.145 tunnel 1 local prefix 10.2.29.0/24')
+    c.send_config_set(config_commands='set vpn ipsec site-to-site peer 3.105.152.145 tunnel 1 remote prefix 172.31.0.0/16')
     # tunnel 2
-    c.send_config_set(config_commands='set vpn ipsec site-to-site peer ip of AWS router2 tunnel 2 allow-nat-networks disable')
-    c.send_config_set(config_commands='set vpn ipsec site-to-site peer ip of AWS router2 tunnel 2 allow-public-networks disable')
-    c.send_config_set(config_commands='set vpn ipsec site-to-site peer ip of AWS router2 tunnel 2 local prefix local subnet 2')
-    c.send_config_set(config_commands='set vpn ipsec site-to-site peer ip of AWS router2 tunnel 2 remote prefix remote subnet')
+    c.send_config_set(config_commands='set vpn ipsec site-to-site peer 3.105.152.145 tunnel 2 allow-nat-networks disable')
+    c.send_config_set(config_commands='set vpn ipsec site-to-site peer 3.105.152.145 tunnel 2 allow-public-networks disable')
+    c.send_config_set(config_commands='set vpn ipsec site-to-site peer 3.105.152.145 tunnel 2 local prefix 192.168.1.0/24')
+    c.send_config_set(config_commands='set vpn ipsec site-to-site peer 3.105.152.145 tunnel 2 remote prefix 172.31.0.0/16')
 
     print('Saving configuration...')
     c.send_config_set(config_commands='commit')
@@ -241,13 +252,18 @@ elif value == 'IP of WAN2':
     c.exit_config_mode()
     c.disconnect()
 
-    # Download with Powershell scripts
-    # SSH into Cloud Controller and modify the JSON configuration file - hasn't tested in bulk run
-
-    k = paramiko.RSAKey.from_private_key_file("Path\\to\\the\\controller_pem_file")
-    cc = paramiko.SSHClient()
-    cc.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-
-    cc.connect(hostname='ip of cloud controller', username='ubuntu', pkey=k)
-    stdin, stdout, stderr = cc.exec_command('sudo cp config2.json /path /to /the /config /file/config.gateway.json')
-    cc.close()
+    ssh_client = paramiko.SSHClient()
+    ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    s = ssh_client.connect(hostname='10.2.29.1', username='SteveVetUnifi', password='rPRRrqr0dyBV0yrO7')
+    # Downloading file
+    ftp_client_d = ssh_client.open_sftp()
+    ftp_client_d.get('/home/SteveVetUnifi/config2.txt', 'C:\\Users\\xezhang\\Desktop\\test\\config2.json')
+    # Uploading file
+    ftp_client_u = paramiko.SSHClient()
+    k = paramiko.RSAKey.from_private_key_file("c:\\Users\\xezhang\\Desktop\\test\\UniFiController.pem")
+    ftp_client_u.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    ftp_client_u.connect(hostname='52.62.211.89', username='ubuntu', pkey=k)
+    with SCPClient(ftp_client_u.get_transport()) as scp:
+        scp.put('C:\\Users\\xezhang\\Desktop\\test\\config2.json', '/home/ubuntu/')
+    ftp_client_u.exec_command('sudo cp /home/ubuntu/config2.json /usr/lib/unifi/data/sites/wnrgknvx/config.gateway.json')
+    ftp_client_u.close()
