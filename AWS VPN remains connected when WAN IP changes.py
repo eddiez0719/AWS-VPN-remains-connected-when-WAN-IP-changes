@@ -7,11 +7,9 @@ import smtplib
 import os
 
 print('Connecting')
-#c=VyOSSSH(ip='54.66.164.57', username='vyos', key_file="c:\\scripts\\private.pem", use_keys=True)
+#c=VyOSSSH(ip='c', username='w', key_file="abc.pem", use_keys=True)
 
-# IT Demon with 4G
-#c = VyOSSSH(ip='192.168.168.1', username='xyli', password='T7XOHict', use_keys=False)
-c = VyOSSSH(ip='10.2.29.1', username='SteveVetUnifi', password='rPRRrqr0dyBV0yrO7', use_keys=False)
+c = VyOSSSH(ip='192.168.0.1', username='eddiez', password='1234', use_keys=False)
 print('Entering Config mode')
 c.config_mode()
 #c.send_config_set(config_commands='configure')
@@ -26,14 +24,13 @@ for value in d.values():
 # Finding local address:
 print('Finding local address of the current VPN...')
 
-# Either can be 123.209.79.139 (WAN1) or 123.209.87.142 (WAN2)
-# Either can be 203.194.45.6 (WAN1) or 14.200.216.194 (WAN2)
+# Either can be a (WAN1) or b (WAN2)
 output = c.send_config_set(config_commands='show vpn ipsec site-to-site | grep local-address')
 
 if value in output:
     print("IP not changed")
 
-elif value == '203.194.45.6':
+elif value == 'a':
     print('WAN1: '+value)
 
     # Email notification phase:
@@ -63,8 +60,8 @@ elif value == '203.194.45.6':
 
     # VPN Processing phase:
     print('Deleting VPN')
-    # c.send_config_set(config_commands='delete vpn ipsec site-to-site peer 13.55.5.211')
-    c.send_config_set(config_commands='delete vpn ipsec site-to-site peer 3.105.152.145')
+    # c.send_config_set(config_commands='delete vpn ipsec site-to-site peer v')
+    c.send_config_set(config_commands='delete vpn ipsec site-to-site peer v')
     c.send_config_set(config_commands='commit')
     c.send_config_set(config_commands='save')
     #print('Building VPN for 123.209.79.173')
@@ -153,7 +150,7 @@ elif value == '203.194.45.6':
     ftp_client_u.close()
 
 
-elif value == '14.200.216.194':
+elif value == 'b':
     print('WAN2 '+value)
 
     # Email notification phase:
@@ -183,10 +180,10 @@ elif value == '14.200.216.194':
 
     # VPN Processing phase:
     print('Deleting VPN')
-    c.send_config_set(config_commands='delete vpn ipsec site-to-site peer 13.54.124.84')
+    c.send_config_set(config_commands='delete vpn ipsec site-to-site peer x')
     c.send_config_set(config_commands='commit')
     c.send_config_set(config_commands='save')
-    print('Building VPN for 14.200.216.194')
+    print('Building VPN for b')
     print('Configuring ESP Groups....')
     c.send_config_set(config_commands='set vpn ipsec esp-group ESP-AWS-TEST2 compression enable')
     c.send_config_set(config_commands='set vpn ipsec esp-group ESP-AWS-TEST2 lifetime 28800')
@@ -229,17 +226,17 @@ elif value == '14.200.216.194':
     c.send_config_set(config_commands='set vpn ipsec site-to-site peer 3.105.152.145 default-esp-group ESP-AWS-TEST2')
     c.send_config_set(config_commands='set vpn ipsec site-to-site peer 3.105.152.145 ike-group IKE-AWS-TEST2')
     c.send_config_set(config_commands='set vpn ipsec site-to-site peer 3.105.152.145 description AWS-TEST2-S2S-VPN')
-    c.send_config_set(config_commands='set vpn ipsec site-to-site peer 3.105.152.145 local-address 14.200.216.194')
+    c.send_config_set(config_commands='set vpn ipsec site-to-site peer 3.105.152.145 local-address b')
     # tunnel 1
     c.send_config_set(config_commands='set vpn ipsec site-to-site peer 3.105.152.145 tunnel 1 allow-nat-networks disable')
     c.send_config_set(config_commands='set vpn ipsec site-to-site peer 3.105.152.145 tunnel 1 allow-public-networks disable')
-    c.send_config_set(config_commands='set vpn ipsec site-to-site peer 3.105.152.145 tunnel 1 local prefix 10.2.29.0/24')
-    c.send_config_set(config_commands='set vpn ipsec site-to-site peer 3.105.152.145 tunnel 1 remote prefix 172.31.0.0/16')
+    c.send_config_set(config_commands='set vpn ipsec site-to-site peer 3.105.152.145 tunnel 1 local prefix e')
+    c.send_config_set(config_commands='set vpn ipsec site-to-site peer 3.105.152.145 tunnel 1 remote prefix f')
     # tunnel 2
     c.send_config_set(config_commands='set vpn ipsec site-to-site peer 3.105.152.145 tunnel 2 allow-nat-networks disable')
     c.send_config_set(config_commands='set vpn ipsec site-to-site peer 3.105.152.145 tunnel 2 allow-public-networks disable')
-    c.send_config_set(config_commands='set vpn ipsec site-to-site peer 3.105.152.145 tunnel 2 local prefix 192.168.1.0/24')
-    c.send_config_set(config_commands='set vpn ipsec site-to-site peer 3.105.152.145 tunnel 2 remote prefix 172.31.0.0/16')
+    c.send_config_set(config_commands='set vpn ipsec site-to-site peer 3.105.152.145 tunnel 2 local prefix e')
+    c.send_config_set(config_commands='set vpn ipsec site-to-site peer 3.105.152.145 tunnel 2 remote prefix f')
 
     print('Saving configuration...')
     c.send_config_set(config_commands='commit')
@@ -254,7 +251,7 @@ elif value == '14.200.216.194':
 
     ssh_client = paramiko.SSHClient()
     ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    s = ssh_client.connect(hostname='10.2.29.1', username='SteveVetUnifi', password='rPRRrqr0dyBV0yrO7')
+    s = ssh_client.connect(hostname='a', username='eddiez', password='abcd')
     # Downloading file
     ftp_client_d = ssh_client.open_sftp()
     ftp_client_d.get('/home/SteveVetUnifi/config2.txt', 'C:\\Users\\xezhang\\Desktop\\test\\config2.json')
@@ -262,7 +259,7 @@ elif value == '14.200.216.194':
     ftp_client_u = paramiko.SSHClient()
     k = paramiko.RSAKey.from_private_key_file("c:\\Users\\xezhang\\Desktop\\test\\UniFiController.pem")
     ftp_client_u.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    ftp_client_u.connect(hostname='52.62.211.89', username='ubuntu', pkey=k)
+    ftp_client_u.connect(hostname='w', username='wub', pkey=k)
     with SCPClient(ftp_client_u.get_transport()) as scp:
         scp.put('C:\\Users\\xezhang\\Desktop\\test\\config2.json', '/home/ubuntu/')
     ftp_client_u.exec_command('sudo cp /home/ubuntu/config2.json /usr/lib/unifi/data/sites/wnrgknvx/config.gateway.json')
